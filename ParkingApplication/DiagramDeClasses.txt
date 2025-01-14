@@ -1,0 +1,113 @@
+
+
+Diagrama UML 
+
+    Classes
+
+        Main - Gestiona la interaccion con el usuario y gestiona el sistema de estacionamiento
+        
+        Parking - Gestiona el estacionamiento (Plazas y vehiculos)
+            - 2D Spots
+
+            Metodos Clave
+                - parkVehicle()
+                - releaseVehicle()
+                - displayParkingStatus()
+
+        Spot - Representa una plaza de aparcamiento, la cual puede ser ocupada
+            - Informacion sobre la planta numero y tipo de vehiculo permitido
+
+            Metodos Clave
+                - assign()
+                - release()
+                - assignTicket()
+
+        Vehicle - Representa un vehiculo
+            - tiene 3 caracteristicas "matricula", "color", "tipo"
+
+            Metodos Clave
+                - getLicensePlate()
+                - getColor()
+                - getType()
+            
+        Ticket - Representa un ticket de estacionamiento asociado a un Vehicle
+            - tiene Informacion sobre la entrada del vehiculo y la salida
+
+            Metodos Clave
+                - getTicketId()
+                - getParkingDuration()
+                - getParkingTime()
+
+
+ 
+             
++-------------------------+
+|      Main               |
++-------------------------+
+| - parking: Parking      |
++-------------------------+
+| + main(args: String[])  |
++-------------------------+
+          |
+          | creates
+          v
++--------------------------------------------+
+|     Parking                                |
++--------------------------------------------+
+| - id: String                               | 
+| - name: String                             |
+| - address: String                          |
+| - phone: String                            |
+| - floors: int                              |
+| - spotsPerFloor: int                       |
+| - spots: Spot[][]                          |
++--------------------------------------------+
+| + parkVehicle(vehicle: Vehicle): Ticket    |
+| + releaseVehicle(ticketId: String): double |
+| + displayParkingStatus(): void             |
++--------------------------------------------+
+          |
+          | manages
+          v
++---------------------------------------+
+|      Spot                             |
++---------------------------------------+
+| - floor: int                          |
+| - number: int                         |
+| - vehicleType: String                 |
+| - occupied: boolean                   |
+| - assignedTicket: Ticket              |
++---------------------------------------+
+| + assign(): void                      |
+| + release(): void                     |
+| + assignTicket(ticket: Ticket): void  |
+| + isOccupied(): boolean               |
++---------------------------------------+
+          |
+          | linked to
+          v
++--------------------------------+
+|     Vehicle                    |
++--------------------------------+
+| - licensePlate: String         |
+| - color: String                | 
+| - type: String                 |
++--------------------------------+
+| + getLicensePlate(): String    | 
+| + getColor(): String           |
+| + getType(): String            |
++--------------------------------+
+          |
+          | generates
+          v
++--------------------------------+
+|  Ticket                        |
++--------------------------------+
+| - ticketId: String             |
+| - entryTime: LocalDateTime     | 
+| - vehicle: Vehicle             |
++--------------------------------+
+| + getTicketId(): String        |
+| + getParkingDuration(): String |
+| + getParkingTime(): long       |
++--------------------------------+
