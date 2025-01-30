@@ -1,19 +1,18 @@
 package parking;
 
-import java.util.Scanner;
+import parking.ParkingExceptions.ParkingFullException;
+import parking.ParkingExceptions.DuplicatedLicensePlateException;
 
-/**
- * @author OscarMur
- */
+import java.util.Scanner;   
 
 public class Main {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws ParkingExceptions.TicketNotFoundException {
         try (Scanner scanner = new Scanner(System.in)) {
             // Create the parking system
             ParkingSystem parkingSystem = new ParkingSystem();
 
             // Create a parking lot
-            Spot[][] spots = new Spot[2][3];                                                             // Floors // Spots
+            Spot[][] spots = new Spot[2][3];                                                               // Floors // Spots
             Parking parking = new Parking("PR123", "Monlau Parking", "C/ Monlau 6, Barcelona", "+34 666 66 66", 2, 3, spots);
 
             // Add parking lot to the system
@@ -34,9 +33,23 @@ public class Main {
 
                 switch (option) {
                     case 1 -> {
-                        // Register a vehicle
-                        System.out.print("Enter the license plate: ");
-                        String plate = scanner.nextLine();
+                        String plate = "";
+                        boolean validPlate = false;
+
+                        // Validate plate
+                        while (!validPlate) {
+                            System.out.println("Enter a license plate (4 digits and 3 letters)");
+                            plate = scanner.nextLine();
+
+                            // Validate plate format
+                            if (plate.matches("\\d{4}[A-Za-z]{3}"))
+                                validPlate = true;
+                            else {
+                                System.out.println("Plate not valid / Please enter a 4 digits and 3 letters plate ");
+                            }
+                        }
+
+                        // Vehicle color
                         System.out.print("Enter the color: ");
                         String color = scanner.nextLine();
 
@@ -62,30 +75,33 @@ public class Main {
 
                         // Create the vehicle
                         Vehicle vehicle = new Vehicle(plate, color, type);
-                        // Try to park the vehicle in the first available parking lot
-                        Ticket ticket = parkingSystem.getParkingLot(parking.getId()).parkVehicle(vehicle);
 
-                        if (ticket != null) {
+                        // Try to park the vehicle in the first available parking lot
+                        try {
+                            // Try to park the vehicle
+                            Ticket ticket = parkingSystem.getParkingLot(parking.getId()).parkVehicle(vehicle);
                             System.out.println("Vehicle registered successfully. Ticket ID: " + ticket.getTicketId());
-                        } else {
-                            System.out.println("No available spots for " + vehicle.getType());
+                        } catch (DuplicatedLicensePlateException | ParkingFullException e) {
+                            System.out.println("Error: " + e.getMessage());
                         }
                     }
 
-
-                    case 2 -> // Check parking status
+                    case 2 -> {
+                        // Check parking status
                         parkingSystem.displayAllParkingStatus();
+                    }
 
                     case 3 -> {
                         // Release a vehicle
                         System.out.print("Enter the ticket ID: ");
-                        System.out.println("Avalivable tickets");
+                        System.out.println("Available tickets");
+                        parking.displayAvailableParkingTickets();
                         String ticketId = scanner.nextLine();
 
-                        double cost = parkingSystem.getParkingLot(parking.getId()).releaseVehicle(ticketId);
-                        if (cost >= 0) {
+                        try {
+                            double cost = parkingSystem.getParkingLot(parking.getId()).releaseVehicle(ticketId);
                             System.out.println("Vehicle released. Parking cost: " + cost + " EUR");
-                        } else {
+                        } catch (ParkingExceptions.TicketNotFoundException e) {
                             System.out.println("Ticket not found or vehicle not parked.");
                         }
                     }

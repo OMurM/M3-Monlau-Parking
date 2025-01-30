@@ -9,14 +9,16 @@ import java.time.format.DateTimeFormatter;
  */
 
 public class Ticket {
-    private String ticketId;
-    private LocalDateTime entryTime;
-    private Vehicle vehicle;
+    private final String ticketId;
+    private final LocalDateTime entryTime;
+    private final Vehicle vehicle;
+    private final Parking parking;
     
     // Constructor
-    public Ticket(String ticketId, Vehicle vehicle) {
+    public Ticket(String ticketId, Vehicle vehicle, Parking parking) {
         this.ticketId = ticketId;
         this.vehicle = vehicle;
+        this.parking = parking;
         this.entryTime = LocalDateTime.now();
     }
 
@@ -31,6 +33,10 @@ public class Ticket {
 
     public Vehicle getVehicle() {
         return vehicle;
+    }
+
+    public Parking getParking() {
+        return parking;
     }
 
     // Format entry time to "dd/MM/yyyy HH:mm"
@@ -57,6 +63,6 @@ public class Ticket {
     // Get the parking time in milliseconds
     public long getParkingTime() {
         Duration duration = Duration.between(entryTime, LocalDateTime.now());
-        return duration.toMillis(); // Return the time in milliseconds
+        return duration.toMillis();
     }
 }

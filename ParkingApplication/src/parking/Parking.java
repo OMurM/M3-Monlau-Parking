@@ -1,5 +1,9 @@
 package parking;
 
+import parking.ParkingExceptions.ParkingFullException;
+import parking.ParkingExceptions.TicketNotFoundException;
+import parking.ParkingExceptions.DuplicatedLicensePlateException;
+
 /**
  * @author OscarMur
  */
@@ -7,18 +11,12 @@ package parking;
 public class Parking {
 
     private final String id;
-    private final String name;
-    private final String address;
-    private final String phone;
     private final int floors;
     private final int spotsPerFloor;
     private final Spot[][] spots;  // 2D array to represent parking spots per floor
 
     public Parking(String id, String name, String address, String phone, int floors, int spotsPerFloor, Spot[][] spots) {
         this.id = id;
-        this.name = name;
-        this.address = address;
-        this.phone = phone;
         this.floors = floors;
         this.spotsPerFloor = spotsPerFloor;
         this.spots = new Spot[floors][spotsPerFloor];
@@ -69,24 +67,31 @@ public class Parking {
     }
 
     // Park a vehicle in the first available spot
-    public Ticket parkVehicle(Vehicle vehicle) {
+    public Ticket parkVehicle(Vehicle vehicle) throws DuplicatedLicensePlateException, ParkingFullException {
         for (int floor = 0; floor < floors; floor++) {
             for (int number = 0; number < spotsPerFloor; number++) {
                 Spot spot = spots[floor][number];
                 if (!spot.isOccupied() && spot.getVehicleType().equalsIgnoreCase(vehicle.getType())) {
-                    spot.assign();
-                    Ticket ticket = new Ticket(String.format("%s_%d_%d", id, floor + 1, number + 1), vehicle);
-                    spot.assignTicket(ticket); // Assign the ticket to the spot
+                    Ticket assignedTicket = spot.getAssignedTicket();
+                    if (assignedTicket != null && assignedTicket.getVehicle().getLicensePlate().equals(vehicle.getLicensePlate())) {
+                        throw new ParkingExceptions.DuplicatedLicensePlateException("Vehicle with this license plate is already parked.");
+                    }
+
+                    spot.assign();  // Asignar el espacio
+                    Ticket ticket = new Ticket(String.format("%s_%d_%d", id, floor + 1, number + 1), vehicle, this); // Pass 'this' (Parking) as the third argument
+                    spot.assignTicket(ticket);  // Asignar el ticket
                     return ticket;
                 }
             }
         }
-        System.out.println("No available spots for " + vehicle.getType());
-        return null;
+        throw new ParkingFullException("No available spots for the vehicle.");
     }
 
+
+
     // Release a vehicle and calculate parking cost
-    public double releaseVehicle(String ticketId) {
+    public double releaseVehicle(String ticketId) throws TicketNotFoundException  {
+        System.out.println("Attempting to release ticket: " + ticketId);
         for (int floor = 0; floor < floors; floor++) {
             for (int number = 0; number < spotsPerFloor; number++) {
                 Spot spot = spots[floor][number];
@@ -100,12 +105,11 @@ public class Parking {
                 }
             }
         }
-        System.out.println("Ticket not found or the vehicle is not parked.");
-        return 0.0;
+        throw new TicketNotFoundException("Ticket not found or vehicle not parked.");
     }
 
     // Calculate parking cost based on duration (3€/hour)
-    private double calculateParkingCost(Ticket ticket) {
+    public double calculateParkingCost(Ticket ticket) {
         long durationInMillis = ticket.getParkingTime();
         double hoursParked = durationInMillis / 3600000.0;
         double rate = 3.0;
@@ -142,6 +146,34 @@ public class Parking {
         }
     }
 
+    public void displayAvailableParkingTickets() {
+        boolean found = false;
+        for (Spot[] spot1 : spots) {
+            for (Spot spot : spot1) {
+                if (spot != null && spot.isOccupied()) {
+                    Ticket ticket = spot.getAssignedTicket();
+                    Vehicle vehicle = spot.getVehicle();
+                    System.out.println("Ticket ID: " + ticket.getTicketId() + " - License Plate: " + vehicle.getLicensePlate());
+                    found = true;
+                }
+            }
+        }
+        if (!found) {
+            System.out.println("No vehicles parked.");
+        }
+    }
+    
+    public Ticket getTicket(String ticketId) {
+        for (Spot[] spot1 : spots) {
+            for (Spot spot : spot1) {
+                if (spot != null && spot.getAssignedTicket() != null && spot.getAssignedTicket().getTicketId().equals(ticketId)) {
+                    return spot.getAssignedTicket();
+                }
+            }
+        }
+        return null;
+    }
+    
     String getId() {
         return id;
     }
